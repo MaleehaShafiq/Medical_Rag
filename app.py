@@ -115,7 +115,7 @@ if uploaded_file is not None:
     llm = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0,
-    openai_api_key=api_key  # ✅ correct argument name for LangChain
+    Open_ai_key=api_key  # ✅ correct argument name for LangChain
 )
 
 
@@ -131,6 +131,7 @@ if uploaded_file is not None:
             st.success(response)
 else:
     st.info("⬆️ Please upload your `dev.json` file to get started.")
+
 
 
 
