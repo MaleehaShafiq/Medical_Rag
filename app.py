@@ -10,13 +10,13 @@ from langchain_openai import ChatOpenAI
 
 
 # ----------------- Helper Functions -----------------
-
-def load_ndjson(file_path):
+def load_ndjson(uploaded_file):
+    """Load NDJSON data from an uploaded file"""
     data = []
-    with open(file_path, "r", encoding="utf-8") as f:
-        for line in f:
-            if line.strip():
-                data.append(json.loads(line))
+    for line in uploaded_file:
+        line = line.decode("utf-8").strip()  # decode bytes → string
+        if line:
+            data.append(json.loads(line))
     return data
 
 
@@ -85,46 +85,47 @@ def create_documents(df):
 
 
 # ----------------- Streamlit App -----------------
-
 st.set_page_config(page_title="RAG QA System", layout="wide")
 st.title("📘 RAG-powered Question Answering")
 
-# Load dataset
-file_path = "data/dev.json"
-raw_data = load_ndjson(file_path)
-processed_data = preprocess_data(raw_data)
-df = pd.DataFrame(processed_data)
-df["correct_answer_text"] = df.apply(map_correct_answer, axis=1)
+uploaded_file = st.file_uploader("Upload your NDJSON file", type=["json", "ndjson"])
 
-# Create documents
-docs = create_documents(df)
+if uploaded_file is not None:
+    raw_data = load_ndjson(uploaded_file)
+    processed_data = preprocess_data(raw_data)
+    df = pd.DataFrame(processed_data)
+    df["correct_answer_text"] = df.apply(map_correct_answer, axis=1)
 
-# Vector store
-embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    # Create documents
+    docs = create_documents(df)
 
-if os.path.exists("vectorstore/faiss_index"):
-    vectorstore = FAISS.load_local("vectorstore/faiss_index", embedding_model, allow_dangerous_deserialization=True)
+    # Vector store
+    embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+    if os.path.exists("vectorstore/faiss_index"):
+        vectorstore = FAISS.load_local("vectorstore/faiss_index", embedding_model, allow_dangerous_deserialization=True)
+    else:
+        vectorstore = FAISS.from_documents(docs, embedding_model)
+        vectorstore.save_local("vectorstore/faiss_index")
+
+    retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+
+    # LLM (set OPENAI_API_KEY in Streamlit secrets!)
+    api_key = os.environ.get("OPENAI_API_KEY")
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=api_key)
+
+    qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, chain_type="stuff")
+
+    # ----------------- User Interface -----------------
+    st.subheader("Ask a Question from your Dataset")
+
+    user_query = st.text_input("Enter your question:")
+    if st.button("Get Answer") and user_query:
+        with st.spinner("Thinking..."):
+            response = qa_chain.run(user_query)
+            st.success(response)
 else:
-    vectorstore = FAISS.from_documents(docs, embedding_model)
-    vectorstore.save_local("vectorstore/faiss_index")
-
-retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 3})
-
-# LLM (you must set OPENAI_API_KEY in your terminal or Streamlit secrets)
-api_key = os.environ.get("OPENAI_API_KEY")
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=api_key)
-
-qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, chain_type="stuff")
-
-# ----------------- User Interface -----------------
-st.subheader("Ask a Question from your Dataset")
-
-user_query = st.text_input("Enter your question:")
-if st.button("Get Answer") and user_query:
-    with st.spinner("Thinking..."):
-        response = qa_chain.run(user_query)
-        st.success(response)
-
+    st.info("⬆️ Please upload your `dev.json` file to get started.")
 
 
 
