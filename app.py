@@ -112,7 +112,12 @@ if uploaded_file is not None:
 
     # LLM (set OPENAI_API_KEY in Streamlit secrets!)
     api_key = os.environ.get("OPENAI_API_KEY")
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=api_key)
+    llm = ChatOpenAI(
+    model="gpt-4o-mini",
+    temperature=0,
+    openai_api_key=api_key  # ✅ correct argument name for LangChain
+)
+
 
     qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, chain_type="stuff")
 
@@ -126,6 +131,7 @@ if uploaded_file is not None:
             st.success(response)
 else:
     st.info("⬆️ Please upload your `dev.json` file to get started.")
+
 
 
 
