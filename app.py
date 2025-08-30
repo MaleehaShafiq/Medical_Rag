@@ -110,42 +110,31 @@ if uploaded_file is not None:
 
     retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 3})
 
-    # LLM (set OPENAI_API_KEY in Streamlit secrets!)
-
-    
+    # ----------------- Load API Key -----------------
     api_key = os.getenv("Open_ai_key")  # 👈 must match exactly with your Streamlit secret name
 
-if not api_key:
-    st.error("⚠️ OpenAI API key not found! Please add it in Streamlit Cloud → Settings → Secrets.")
-else:
-    llm = ChatOpenAI(
-        model="gpt-4o-mini",
-        temperature=0,
-        api_key=api_key
-    )
+    if not api_key:
+        st.error("⚠️ OpenAI API key not found! Please add it in Streamlit Cloud → Settings → Secrets.")
+    else:
+        llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            temperature=0,
+            api_key=api_key
+        )
 
-    qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, chain_type="stuff")
+        qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, chain_type="stuff")
 
-    # ----------------- User Interface -----------------
-    st.subheader("Ask a Question from your Dataset")
+        # ----------------- User Interface -----------------
+        st.subheader("Ask a Question from your Dataset")
 
-    user_query = st.text_input("Enter your question:")
-    if st.button("Get Answer") and user_query:
-        with st.spinner("Thinking..."):
-            response = qa_chain.run(user_query)
-            st.success(response)
+        user_query = st.text_input("Enter your question:")
+        if st.button("Get Answer") and user_query:
+            with st.spinner("Thinking..."):
+                response = qa_chain.run(user_query)
+                st.success(response)
+
 else:
     st.info("⬆️ Please upload your `dev.json` file to get started.")
-
-
-
-
-
-
-
-
-
-
 
 
 
