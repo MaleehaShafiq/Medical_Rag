@@ -111,13 +111,18 @@ if uploaded_file is not None:
     retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 3})
 
     # LLM (set OPENAI_API_KEY in Streamlit secrets!)
-    api_key = os.environ.get("OPENAI_API_KEY")
-    llm = ChatOpenAI(
-    model="gpt-4o-mini",
-    temperature=0,
-    api_key=Open_ai_key  # ✅ correct argument name for LangChain
-)
 
+    
+    api_key = os.getenv("Open_ai_key")  # 👈 must match exactly with your Streamlit secret name
+
+if not api_key:
+    st.error("⚠️ OpenAI API key not found! Please add it in Streamlit Cloud → Settings → Secrets.")
+else:
+    llm = ChatOpenAI(
+        model="gpt-4o-mini",
+        temperature=0,
+        api_key=api_key
+    )
 
     qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, chain_type="stuff")
 
@@ -131,6 +136,7 @@ if uploaded_file is not None:
             st.success(response)
 else:
     st.info("⬆️ Please upload your `dev.json` file to get started.")
+
 
 
 
