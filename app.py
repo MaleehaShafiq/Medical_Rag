@@ -2,11 +2,16 @@ import os
 import json
 import pandas as pd
 import streamlit as st
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
+import os
+import json
+import pandas as pd
+import streamlit as st
+
 
 
 # ----------------- Helper Functions -----------------
@@ -135,6 +140,7 @@ if uploaded_file is not None:
 
 else:
     st.info("⬆️ Please upload your `dev.json` file to get started.")
+
 
 
 
