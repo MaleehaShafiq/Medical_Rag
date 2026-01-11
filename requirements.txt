@@ -1,5 +1,6 @@
 streamlit
-langchain
+langchain>=0.2.0
+langchain-core
 langchain-community
 langchain-openai
 faiss-cpu
@@ -7,3 +8,4 @@ openai
 tiktoken
 sentence-transformers
 pandas
+
